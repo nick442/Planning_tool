@@ -6,6 +6,16 @@ down step by step into a tree of smaller steps, and tick off the small steps.
 Each completed step lands in a **Completed** feed, so the progress you've made
 stays visible and keeps you going.
 
+**Decisions so far**
+
+| Question | Decision |
+|----------|----------|
+| Devices | **Laptop and phone.** The mobile layout and installable app (PWA) are part of the MVP. |
+| Sync | **Self-hosted on the always-on Mac mini.** The data lives there, and each device keeps an offline copy. |
+| AI suggestions | **Out of scope.** |
+| Deadlines | **Shown, not planned around.** Goals have a deadline with a countdown. There is no back-planning and no warnings. The tool stays focused on breaking tasks down and keeping momentum. |
+| Goal order | **Drag and drop** to reorder goals in the sidebar. |
+
 ---
 
 ## 1. Core idea
@@ -15,8 +25,8 @@ start. The tool deals with that in three ways:
 
 1. **Break it down.** Any step can be split into smaller child steps, as many
    levels deep as needed, until each one is obvious and small.
-2. **Show only what's next.** A focus view shows the small actionable steps
-   (the leaves of the tree), not the whole intimidating project.
+2. **Show only what's next.** A Today view shows a few small actionable steps,
+   not the whole intimidating project.
 3. **Make progress visible.** Finished steps go to a Completed feed and fill
    up progress bars and streaks.
 
@@ -24,12 +34,12 @@ start. The tool deals with that in three ways:
 
 ## 2. Concepts and terminology
 
-| Term          | Meaning                                                                 |
-|---------------|-------------------------------------------------------------------------|
-| **Goal**      | A top-level item: "Thesis", "ML course – Assignment 3", "Stats exam". |
-| **Step**      | Any node beneath a goal. Steps can have child steps.                 |
-| **Branch**    | A step together with all its descendants.                              |
-| **Leaf / Action** | A step with no children. It's the thing you actually *do*.        |
+| Term          | Meaning |
+|---------------|---------|
+| **Goal**      | A top-level item: "Thesis", "ML course – Assignment 3", "Stats exam". It has a deadline and a position in the goal list. |
+| **Step**      | Any node beneath a goal. Steps can have child steps. |
+| **Branch**    | A step together with all its descendants. |
+| **Leaf / Action** | A step with no children. It's the thing you actually *do*. |
 | **Completed** | A step marked done. It moves to the Completed feed and is hidden from the active tree by default. |
 
 Rules:
@@ -45,83 +55,108 @@ Rules:
 ## 3. Features
 
 ### MVP (v1)
-- **Goals:** create, rename, archive, colour or emoji, optional deadline, and a
-  tag such as *Course* or *Thesis*.
+- **Goals:**
+  - create, rename, archive, colour or emoji, and a tag such as *Course*, *Thesis* or *Exam*
+  - **deadline** (optional), shown as a date plus a countdown ("12 days left")
+  - **reorder by drag and drop** in the sidebar (long-press and drag on the phone)
 - **Breakdown tree (Outline view):** a collapsible, indented tree with
-  keyboard-first editing:
-  - `Enter` adds a sibling, `Tab` / `Shift+Tab` indents or outdents (makes a child or parent)
+  keyboard-first editing on desktop:
+  - `Enter` adds a sibling, `Tab` / `Shift+Tab` indents or outdents
   - `Space` (or clicking the checkbox) completes a step
   - drag and drop to reorder or move branches
   - inline title editing, plus an optional notes field per step
+  - on the phone: tap to edit, swipe right to complete, and a "+" button on
+    each row to add a sub-step
 - **Mark complete:** checkbox with a short animation. The step fades out of the
   active tree and appears in the Completed feed.
 - **Completed feed:** a reverse-chronological list grouped by day ("Today",
   "Yesterday", "Mon 3 Nov") that shows each step's title and the breadcrumb of
   its goal. Each entry has an undo button.
 - **Progress:** a progress bar on each goal and branch (done leaves / total leaves).
-- **Persistence:** everything is saved automatically in the browser (IndexedDB),
-  and works offline.
-- **Backup:** export and import all data as JSON.
+- **Works offline:** every device keeps a local copy and saves instantly.
+- **Sync through the Mac mini:** changes reach your other devices within
+  seconds when online, and offline changes are sent when you reconnect
+  (see §5).
+- **Installable app (PWA):** add it to the iPhone/Android home screen and it
+  opens full screen like a native app.
+- **Backup:** a nightly automatic backup on the Mac mini, plus manual
+  JSON export and import.
 
 ### v2: Visual and momentum
 - **Map view (branches):** a visual left-to-right tree/mind-map of a goal,
   laid out automatically. Done branches turn green or collapse, and the leaves
   you can act on now are highlighted. You can add children directly from a node.
 - **Today / Focus list:** pick 1–3 leaf steps for today. A dedicated, minimal
-  screen shows *only* these.
-- **"Too big?" nudge:** steps can have a rough size (S / M / L or minutes).
-  Anything estimated at more than ~2 h gets a "Break this down" hint.
+  screen shows *only* these (the default tab on the phone).
+- **"Too big?" nudge:** steps can have a rough size (S / M / L).
+  Anything marked L gets a "Break this down" hint.
 - **Streaks and stats:** consecutive days with at least one completed step, steps
   completed this week, and a small heatmap (GitHub-style).
 - **Focus timer:** start a 25-minute (configurable) Pomodoro on a step, plus a
   **"Just 5 minutes"** button to get past starting friction.
 
-### v3: Nice to have
-- **AI breakdown assistant:** "Suggest sub-steps" on any step uses the Claude
-  API to propose 3–7 concrete child steps, which you edit and accept.
-- **Deadline back-planning:** given a goal deadline and step estimates, suggest
-  which steps should be done by when, and flag goals that are falling behind.
-- **Calendar export:** push "Today" steps or deadlines into Google Calendar or
-  an `.ics` file.
-- **Sync across devices:** optional cloud backend (e.g. Supabase) so laptop
-  and phone stay in sync.
-- **Weekly review:** a short guided screen covering what you finished, what's
-  stuck, and what's next week's focus.
-- Dark mode, themes, PWA install on phone.
+### Later (if wanted)
+- Weekly review screen: what you finished, what's stuck, and what's next week's focus.
+- Themes, plus a sort option for goals by deadline next to the manual order.
+
+**Explicitly out of scope:** AI suggestions, deadline back-planning and
+warnings, calendar integration, multiple users.
 
 ---
 
 ## 4. UI / UX
 
 Design principles: **calm, minimal, few colours, lots of whitespace**, one
-accent colour per goal, smooth but subtle animations, fully usable with the
-keyboard.
+accent colour per goal, smooth but subtle animations, dark mode, fully usable
+with the keyboard on desktop and with one thumb on the phone.
 
-### Main layout (desktop)
+### Desktop / laptop
 
 ```
-┌──────────────┬──────────────────────────────────────┬──────────────────┐
-│  GOALS       │  Thesis                 [Outline|Map] │  COMPLETED  🔥 5 │
-│              │  ██████████░░░░░░░░  42%   due 15 Jun │                  │
-│ ● Thesis 42% │                                       │  Today           │
-│ ● ML A3  80% │  ▾ Literature review          ███░ 60%│  ✓ Read paper X  │
-│ ● Stats  10% │     ▾ Find sources                    │  ✓ Outline ch. 2 │
-│              │        ☐ Search Scopus for "..."      │                  │
-│ + New goal   │        ☐ Ask supervisor for key refs  │  Yesterday       │
-│              │     ▸ Write summaries (3 open)        │  ✓ Set up Zotero │
-│ ──────────── │  ▾ Methodology                ░░░░ 0% │  ✓ Draft RQ      │
-│ ☀ Today (3)  │     ☐ Draft research questions        │                  │
-│ 📊 Stats     │     + Add step                        │  [Show all]      │
-│              │  + Add step      [ ] Show completed   │                  │
-└──────────────┴──────────────────────────────────────┴──────────────────┘
+┌────────────────┬──────────────────────────────────────┬──────────────────┐
+│  GOALS    ⇅    │  Thesis                 [Outline|Map] │  COMPLETED  🔥 5 │
+│                │  ██████████░░░░░░░░ 42%  ⏳ 12 days   │                  │
+│ ⠿ ● Thesis     │                                       │  Today           │
+│     42% · 12d  │  ▾ Literature review          ███░ 60%│  ✓ Read paper X  │
+│ ⠿ ● ML A3      │     ▾ Find sources                    │  ✓ Outline ch. 2 │
+│     80% · 3d   │        ☐ Search Scopus for "..."      │                  │
+│ ⠿ ● Stats exam │        ☐ Ask supervisor for key refs  │  Yesterday       │
+│     10% · 30d  │     ▸ Write summaries (3 open)        │  ✓ Set up Zotero │
+│                │  ▾ Methodology                ░░░░ 0% │  ✓ Draft RQ      │
+│ + New goal     │     ☐ Draft research questions        │                  │
+│ ────────────── │     + Add step                        │  [Show all]      │
+│ ☀ Today (3)    │  + Add step      [ ] Show completed   │                  │
+│ 📊 Stats       │                               ● synced│                  │
+└────────────────┴──────────────────────────────────────┴──────────────────┘
 ```
+`⠿` = drag handle for reordering goals.
+The small **sync indicator** shows synced, syncing or offline (with the
+number of pending changes).
 
-- **Left:** goal list with progress, and the Today and Stats screens.
-- **Centre:** the selected goal as an Outline or a Map (toggle).
-- **Right:** the Completed feed and current streak, which you can collapse.
-- **Mobile:** single column with bottom tabs (Goals / Today / Completed).
+### Phone
 
-### Map view sketch
+```
+┌─────────────────────────┐
+│ ‹ Goals     Thesis   ⋯  │
+│ ████████░░░░ 42% · 12d  │
+│                         │
+│ ▾ Literature review 60% │
+│   ▾ Find sources        │
+│     ☐ Search Scopus  +  │
+│     ☐ Ask supervisor +  │
+│   ▸ Write summaries     │
+│ ▾ Methodology        0% │
+│     ☐ Draft RQs      +  │
+│                         │
+│            ( + )        │
+├─────────────────────────┤
+│ ☀ Today │ ◎ Goals │ ✓ Done │
+└─────────────────────────┘
+```
+There are three bottom tabs: **Today** (default), **Goals** (goal list → tree)
+and **Done** (Completed feed and streak).
+
+### Map view sketch (v2)
 
 ```
                          ┌─ Find sources ──┬─ ☐ Search Scopus
@@ -132,94 +167,182 @@ keyboard.
 
 ---
 
-## 5. Technical approach
+## 5. Architecture: local-first, synced via the Mac mini
 
-**Recommendation:** a local-first web app (later installable as a PWA). It
-runs in any browser, needs no server in v1, and can be added to a phone home
-screen.
+```
+  iPhone (PWA)            Laptop (browser/PWA)
+  ┌─────────────┐         ┌─────────────┐
+  │ React app   │         │ React app   │
+  │ IndexedDB   │         │ IndexedDB   │   ← always works offline
+  │ + outbox    │         │ + outbox    │
+  └──────┬──────┘         └──────┬──────┘
+         │  HTTPS over Tailscale (private network)
+         └──────────┬────────────┘
+             ┌──────▼───────────────────┐
+             │ Mac mini                  │
+             │  Node server (Hono)       │  serves the web app + /api/sync
+             │  SQLite (planning.db)     │  ← source of truth
+             │  launchd: auto-start      │
+             │  nightly backup           │
+             └───────────────────────────┘
+```
 
-| Concern            | Choice                                   | Why |
-|--------------------|------------------------------------------|-----|
-| Framework          | **React + TypeScript + Vite**            | Fast dev loop, huge ecosystem, type safety for the tree logic. |
-| Styling            | **Tailwind CSS** + **shadcn/ui** (Radix) | Clean, consistent, accessible components with little effort. |
-| State              | **Zustand**                              | Simple global store, no boilerplate. |
-| Persistence        | **Dexie.js** (IndexedDB)                 | Offline, robust, easy migrations. |
-| Drag & drop        | **dnd-kit**                              | Good support for nested/tree sortable lists. |
-| Map view           | **React Flow (@xyflow/react)** + **elkjs/dagre** auto-layout | Interactive node graph with pan/zoom out of the box. |
-| Animations         | **Framer Motion**                        | Completion and "move to Completed" transitions. |
-| Dates              | **date-fns**                             | Grouping the Completed feed by day, streaks. |
-| Testing            | **Vitest** (logic) + **Playwright** (e2e)| Tree operations must be reliable. |
-| PWA                | **vite-plugin-pwa**                      | Offline and installable. |
-| Hosting            | GitHub Pages / Netlify / Vercel          | Free static hosting. |
+### Why this setup
+- **Local-first:** the app reads and writes its local database, so it's
+  instant and works on a train or in the library without Wi-Fi. Sync runs in
+  the background.
+- **Mac mini as hub:** a small Node + SQLite server holds the full data.
+  You don't need a cloud account or a subscription, and the data stays yours.
+- **Tailscale for access:** the Mac mini, laptop and phone join one private
+  Tailscale network (free for personal use). This means:
+  - You can reach the server from anywhere (uni, home, mobile data)
+    **without opening ports** on your router.
+  - `tailscale serve` gives a real **HTTPS** address
+    (e.g. `https://mac-mini.<tailnet>.ts.net`). Installable apps and offline
+    support only work over HTTPS.
+  - Only your own devices can reach the server. A simple access token
+    adds a second layer.
 
-### Data model
+### Sync protocol (simple, robust, single-user)
+Every record (`Goal`, `Step`) carries:
+- `id`: an ID generated on the device (ULID), so records can be created offline
+- `updatedAt`: when it was last changed, set on the device
+- `deleted`: a deletion marker, so deletions sync too
+- `rev`: a revision number the server assigns, rising with every change it stores
+
+Flow:
+1. **Local change** → write to IndexedDB *and* append to a local `outbox`.
+2. **Push** `POST /api/sync/push` with the outbox. For each record, the server
+   keeps whichever copy has the newer `updatedAt` (last write wins), stores it
+   with a new `rev`, and confirms. The client then clears those outbox entries.
+3. **Pull** `GET /api/sync/pull?since=<lastRev>` → every record changed
+   since. The client applies them and saves the new `lastRev`.
+4. **When it runs:** on app start, when the app regains focus, about 1 s after
+   a local change, every 60 s, and immediately when the server sends a
+   "something changed" notification over a live connection (SSE) to the other
+   open devices.
+
+Conflicts can only happen if the same step is edited on two devices while
+both are offline. Last write wins per record is fine for one user. If this
+ever becomes annoying, upgrade to per-field timestamps, so a rename on the
+laptop and a completion on the phone both survive.
+
+Ordering uses **fractional indexing** (sort keys like `"a0"`, `"a0V"`, `"a1"`).
+Moving a goal or step changes only that item's key. This keeps drag and drop
+cheap and reduces sync conflicts.
+
+### Data model (shared between app and server)
 
 ```ts
+interface SyncFields {
+  id: string;          // ULID
+  updatedAt: string;   // ISO timestamp
+  deleted: boolean;
+  rev?: number;        // assigned by server
+}
+
 type GoalKind = 'course' | 'thesis' | 'exam' | 'other';
 
-interface Goal {
-  id: string;
+interface Goal extends SyncFields {
   title: string;
   kind: GoalKind;
-  course?: string;          // e.g. "Advanced ML"
+  course?: string;     // e.g. "Advanced ML"
   color: string;
-  deadline?: string;        // ISO date
+  deadline?: string;   // ISO date, display + countdown only
+  order: string;       // fractional index → drag & drop order in sidebar
   archived: boolean;
   createdAt: string;
 }
 
-interface Step {
-  id: string;
+interface Step extends SyncFields {
   goalId: string;
   parentId: string | null;  // null = top-level step under the goal
-  order: number;            // fractional index for cheap reordering
+  order: string;            // fractional index among siblings
   title: string;
   notes?: string;
-  estimate?: 'S' | 'M' | 'L' | number; // number = minutes
-  dueDate?: string;
+  size?: 'S' | 'M' | 'L';   // v2
   status: 'open' | 'done';
   completedAt?: string;
   autoCompleted?: boolean;  // completed because all children finished
-  inToday?: boolean;        // v2: pinned to Today list
+  inToday?: boolean;        // v2
   createdAt: string;
-}
-
-interface FocusSession {      // v2
-  id: string;
-  stepId: string;
-  startedAt: string;
-  durationMin: number;
 }
 ```
 
-A flat `steps` table with `parentId` keeps storage and drag-and-drop moves
-simple. The tree is built in memory with a selector, `buildTree(goalId)`.
-Derived values (progress, leaf status, streak) are computed rather than stored.
+A flat `steps` table with `parentId` keeps storage and sync simple. The tree
+is built in memory with `buildTree(goalId)`. Derived values (progress,
+streaks) are computed rather than stored.
+
+### Tech stack
+
+| Concern            | Choice | Why |
+|--------------------|--------|-----|
+| Repo layout        | **pnpm workspaces** monorepo | Web app, server and shared types/logic in one repo. |
+| Frontend           | **React + TypeScript + Vite** | Fast dev loop, type safety for the tree logic. |
+| Styling            | **Tailwind CSS** + **shadcn/ui** (Radix) | Clean, accessible components with little effort. |
+| State              | **Zustand** | Simple store; reads from Dexie through live queries. |
+| Local DB           | **Dexie.js** (IndexedDB) | Offline storage with reactive queries. |
+| Drag & drop        | **dnd-kit** | Sortable goal list and nested tree; works with touch. |
+| Map view (v2)      | **React Flow (@xyflow/react)** + **elkjs** | Interactive node graph with automatic layout. |
+| Animations         | **Framer Motion** | Completion and "move to Completed" transitions. |
+| Dates              | **date-fns** | Day grouping, countdowns, streaks. |
+| PWA                | **vite-plugin-pwa** | Service worker, offline support, install to home screen. |
+| Server             | **Node 22 + Hono** | Tiny, fast and typed; also serves the built frontend. |
+| Server DB          | **SQLite** via **better-sqlite3** + **Drizzle ORM** | One file, no DB server, easy backup. |
+| Validation         | **Zod** (shared) | Same schemas validate data on the device and on the server. |
+| Testing            | **Vitest** (tree + sync logic) + **Playwright** (e2e incl. two-device sync) | Tree and sync must be reliable. |
+| Hosting            | Mac mini + **launchd** + **Tailscale serve** | Always on, auto-restarts, private HTTPS. |
 
 ### Project structure
 
 ```
-src/
-  app/            # routing, layout shell
-  features/
-    goals/        # goal list, goal header, create/edit dialogs
-    tree/         # outline view, step row, keyboard handling, dnd
-    map/          # React Flow map view
-    completed/    # completed feed, undo
-    today/        # focus list, timer (v2)
-    stats/        # streaks, heatmap (v2)
-  lib/
-    db.ts         # Dexie schema + migrations
-    tree.ts       # pure functions: buildTree, progress, move, completeCascade
-    dates.ts
-  store/          # Zustand stores
-  components/ui/  # shadcn components
-tests/
+apps/
+  web/
+    src/
+      app/            # routing, layout shell, bottom tabs on mobile
+      features/
+        goals/        # sidebar, sortable goal list, deadline badge, dialogs
+        tree/         # outline view, step row, keyboard + touch handling, dnd
+        completed/    # completed feed, undo
+        today/        # focus list, timer (v2)
+        map/          # React Flow map view (v2)
+        stats/        # streaks, heatmap (v2)
+      sync/           # outbox, push/pull loop, SSE listener, status indicator
+      db/             # Dexie schema + migrations
+  server/
+    src/
+      index.ts        # Hono app: static files + /api
+      sync.ts         # push/pull handlers, rev counter, SSE broadcast
+      db/             # Drizzle schema + migrations (SQLite)
+      backup.ts       # nightly SQLite backup
+packages/
+  shared/
+    src/
+      schema.ts       # Zod schemas + TS types for Goal/Step
+      tree.ts         # pure: buildTree, progress, move, indent, completeCascade
+      order.ts        # fractional indexing helpers
+deploy/
+  com.planningtool.server.plist   # launchd service for the Mac mini
+  README.md                       # Mac mini + Tailscale setup steps
 ```
 
-All tree logic (move, indent, outdent, complete or uncomplete with cascade,
-progress) lives in **pure functions in `lib/tree.ts`** with thorough unit tests.
-The UI only calls these functions.
+All tree logic lives in **pure functions in `packages/shared`** with thorough
+unit tests. The UI and the server only call these functions.
+
+### Mac mini deployment (one-time setup)
+1. Install Node 22 and pnpm, clone the repo, run `pnpm install && pnpm build`.
+2. Install the `launchd` plist so the server starts on boot and restarts if
+   it crashes.
+3. Install Tailscale on the Mac mini, laptop and phone, and sign in with the
+   same account.
+4. Run `tailscale serve --bg 3000` to get the HTTPS address.
+5. On the phone, open that address in Safari or Chrome and choose
+   **Add to Home Screen**.
+6. Backups: the server writes a nightly `planning-YYYY-MM-DD.db` copy (keeps the
+   last 30) into a folder that Time Machine or iCloud Drive also backs up.
+
+To update later: `git pull && pnpm build`, then restart the service (or use a
+small `deploy/update.sh` script).
 
 ---
 
@@ -227,33 +350,32 @@ The UI only calls these functions.
 
 | # | Milestone | Deliverable | Rough effort |
 |---|-----------|-------------|--------------|
-| 0 | **Setup** | Vite + React + TS + Tailwind + shadcn, lint and format, Vitest, CI on GitHub Actions, deploy preview | ½ day |
-| 1 | **Data layer** | Dexie schema, Zustand store, `tree.ts` with unit tests (build, add, move, indent, complete, cascade, progress) | 1–2 days |
-| 2 | **Goals + Outline view** | Sidebar goals, outline tree, inline edit, keyboard shortcuts, collapse/expand | 2–3 days |
-| 3 | **Completion + Completed feed** | Checkbox, animation, hide done, Completed panel grouped by day, undo, progress bars | 1–2 days |
-| 4 | **Drag & drop + export/import** | dnd-kit nested reorder or move, JSON backup → **MVP done** | 1–2 days |
-| 5 | **Map view** | React Flow + auto-layout, sync with outline, add children from nodes | 2–3 days |
-| 6 | **Momentum features** | Today list, size estimates and "too big" nudge, streaks, heatmap, focus timer | 2–3 days |
-| 7 | **Polish + PWA** | Dark mode, mobile layout, installable PWA, empty states, onboarding example goal | 1–2 days |
-| 8 | **Optional extras** | AI breakdown, back-planning, calendar, sync, weekly review | as desired |
+| 0 | **Setup** | pnpm monorepo (web / server / shared), TS, Tailwind + shadcn, lint and format, Vitest, GitHub Actions CI | ½–1 day |
+| 1 | **Core logic** | `shared`: Zod schemas, `tree.ts` (build, add, move, indent, complete, cascade, progress), fractional ordering, unit tests | 1–2 days |
+| 2 | **Local app: goals + outline** | Dexie DB, sortable goal sidebar (drag and drop), deadline + countdown, outline tree, inline edit, keyboard shortcuts | 2–3 days |
+| 3 | **Completion + Completed feed** | Checkbox and animation, hide done, Completed panel grouped by day, undo, progress bars | 1–2 days |
+| 4 | **Mobile + PWA** | Responsive layout, bottom tabs, touch drag, swipe to complete, installable PWA with offline support | 1–2 days |
+| 5 | **Server + sync** | Hono + SQLite server, push/pull + SSE, client outbox and sync loop, sync indicator, two-device e2e test | 2–3 days |
+| 6 | **Mac mini deploy** | launchd service, Tailscale serve, nightly backups, JSON export/import, deploy README → **MVP done** | ½–1 day |
+| 7 | **Map view** | React Flow + auto-layout, add children from nodes | 2–3 days |
+| 8 | **Momentum features** | Today list, S/M/L sizes + "too big" nudge, streaks, heatmap, focus timer | 2–3 days |
+| 9 | **Polish** | Dark mode, empty states, an example goal for onboarding, small UX fixes from real use | 1–2 days |
+
+The MVP (milestones 0–6) is about **2–2.5 weeks** of part-time work. Milestones
+2–4 already give a usable single-device app, so you can start using it for
+real coursework before sync is done.
 
 ---
 
 ## 7. MVP acceptance criteria
 
-- [ ] I can create a goal "Thesis" and add a step "Literature review".
-- [ ] I can break "Literature review" into sub-steps and those into sub-sub-steps.
-- [ ] I can reorder and move steps (keyboard and drag).
+- [ ] I can create goals with a deadline and see "N days left" next to each.
+- [ ] I can reorder goals by dragging them in the sidebar (and by long-press on the phone).
+- [ ] I can break a goal into steps, sub-steps and sub-sub-steps, and reorder or move them.
 - [ ] Ticking a step animates it out of the tree and into **Completed → Today**.
 - [ ] Completing all children of a step completes the parent too; undo restores both.
 - [ ] Progress bars on goals and branches update instantly.
-- [ ] Reloading the page or going offline loses nothing; I can export and import a JSON backup.
-
----
-
-## 8. Open questions
-
-1. **Devices:** mostly laptop, or also phone? This decides how early sync and PWA matter.
-2. **Sync:** is local-only (with JSON backup) fine at first, or is cross-device sync a must from day one?
-3. **AI assistance:** should the "suggest sub-steps" feature be in scope (it requires an API key)?
-4. **Deadlines:** should the tool actively plan and warn based on deadlines, or stay a pure breakdown and momentum tool?
+- [ ] The app is installed on my phone's home screen and works with no connection.
+- [ ] A step completed on my phone appears as completed on my laptop within a few seconds.
+- [ ] Changes made offline sync automatically once I'm back online.
+- [ ] The Mac mini keeps nightly backups, and I can export/import JSON manually.
