@@ -14,6 +14,10 @@ interface UiState {
   showArchived: boolean;
   /** Collapsed step ids (persisted). */
   collapsed: Record<string, true>;
+  /** Main area below the large breakpoint: a goal or the Completed feed. */
+  view: 'goal' | 'completed';
+  /** Completed feed filter. */
+  feedScope: 'all' | 'goal';
 
   selectGoal: (id: string | null) => void;
   focusStep: (id: string | null) => void;
@@ -21,6 +25,8 @@ interface UiState {
   setShowCompleted: (show: boolean) => void;
   setShowArchived: (show: boolean) => void;
   setCollapsed: (id: string, collapsed: boolean) => void;
+  setView: (view: 'goal' | 'completed') => void;
+  setFeedScope: (scope: 'all' | 'goal') => void;
 }
 
 export const useUiStore = create<UiState>()(
@@ -32,8 +38,11 @@ export const useUiStore = create<UiState>()(
       showCompleted: false,
       showArchived: false,
       collapsed: {},
+      view: 'goal',
+      feedScope: 'all',
 
-      selectGoal: (id) => set({ selectedGoalId: id, focusedStepId: null, editingStepId: null }),
+      selectGoal: (id) =>
+        set({ selectedGoalId: id, focusedStepId: null, editingStepId: null, view: 'goal' }),
       focusStep: (id) => set({ focusedStepId: id }),
       editStep: (id) =>
         set(id ? { editingStepId: id, focusedStepId: id } : { editingStepId: null }),
@@ -46,6 +55,8 @@ export const useUiStore = create<UiState>()(
           else delete collapsed[id];
           return { collapsed };
         }),
+      setView: (view) => set({ view }),
+      setFeedScope: (feedScope) => set({ feedScope }),
     }),
     {
       name: 'planning-ui',
@@ -54,6 +65,7 @@ export const useUiStore = create<UiState>()(
         showCompleted: s.showCompleted,
         showArchived: s.showArchived,
         collapsed: s.collapsed,
+        feedScope: s.feedScope,
       }),
     },
   ),

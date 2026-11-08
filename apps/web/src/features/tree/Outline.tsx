@@ -15,6 +15,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { buildTree, type Goal, type Step } from '@planning/shared';
 import { Plus } from 'lucide-react';
 import { useUiStore } from '@/app/store';
+import { toggleWithFeedback, useLeavingStore } from '@/features/completed/completion';
 import { Button } from '@/components/ui/button';
 import {
   flattenVisible,
@@ -34,7 +35,6 @@ import {
   removeStep,
   renameStep,
   setNotes,
-  toggleComplete,
 } from './stepActions';
 
 interface OutlineProps {
@@ -53,14 +53,19 @@ function neighbourAfterRemoval(rows: readonly FlatRow[], row: FlatRow): FlatRow 
 
 export function Outline({ goal, steps }: OutlineProps) {
   const showCompleted = useUiStore((s) => s.showCompleted);
+  const leaving = useLeavingStore((s) => s.leaving);
   const setShowCompleted = useUiStore((s) => s.setShowCompleted);
   const collapsed = useUiStore((s) => s.collapsed);
   const focusedStepId = useUiStore((s) => s.focusedStepId);
   const editingStepId = useUiStore((s) => s.editingStepId);
 
   const tree = useMemo(
-    () => buildTree(steps, goal.id, { includeCompleted: showCompleted }),
-    [steps, goal.id, showCompleted],
+    () =>
+      buildTree(steps, goal.id, {
+        // Just-completed steps stay a moment longer so they can animate out.
+        includeCompleted: showCompleted || ((step) => leaving[step.id] === true),
+      }),
+    [steps, goal.id, showCompleted, leaving],
   );
   const rows = useMemo(() => flattenVisible(tree, collapsed), [tree, collapsed]);
   const doneCount = useMemo(
@@ -123,7 +128,7 @@ export function Outline({ goal, steps }: OutlineProps) {
     const toggle = async (row: FlatRow) => {
       const hides = row.node.step.status === 'open' && !ui().showCompleted;
       const neighbour = hides ? neighbourAfterRemoval(rowsRef.current, row) : undefined;
-      const changed = await toggleComplete(row.node.step);
+      const changed = await toggleWithFeedback(row.node.step);
       if (changed && hides && ui().focusedStepId === row.id) focusRow(neighbour?.id);
     };
 
@@ -303,7 +308,7 @@ export function Outline({ goal, steps }: OutlineProps) {
 
   return (
     <div ref={containerRef} className="space-y-2">
-      {rows.length === 0 && (
+      {rows.every((r) => !showCompleted && leaving[r.id]) && (
         <p className="py-6 text-sm text-muted-foreground">
           {doneCount > 0 && !showCompleted
             ? 'Everything here is done. 🎉'
@@ -328,6 +333,7 @@ export function Outline({ goal, steps }: OutlineProps) {
                 row={row}
                 focused={row.id === focusedStepId}
                 editing={row.id === editingStepId}
+                leaving={!showCompleted && leaving[row.id] === true}
                 tabbable={focusedStepId === null && index === 0}
                 {...(row.id === activeId && projection ? { dragDepth: projection.depth } : {})}
                 handlers={handlers}

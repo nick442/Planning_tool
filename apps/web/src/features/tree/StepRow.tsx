@@ -35,6 +35,8 @@ interface StepRowProps {
   row: FlatRow;
   focused: boolean;
   editing: boolean;
+  /** Just completed: animating out of the outline. */
+  leaving?: boolean;
   /** First row gets tabIndex 0 when nothing is focused (roving tabindex). */
   tabbable: boolean;
   /** Depth to render at while this row is being dragged. */
@@ -42,7 +44,15 @@ interface StepRowProps {
   handlers: StepRowHandlers;
 }
 
-function StepRowImpl({ row, focused, editing, tabbable, dragDepth, handlers }: StepRowProps) {
+function StepRowImpl({
+  row,
+  focused,
+  editing,
+  leaving = false,
+  tabbable,
+  dragDepth,
+  handlers,
+}: StepRowProps) {
   const { step, progress, isLeaf } = row.node;
   const done = step.status === 'done';
   const rowRef = useRef<HTMLDivElement>(null);
@@ -97,7 +107,8 @@ function StepRowImpl({ row, focused, editing, tabbable, dragDepth, handlers }: S
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform && { ...transform, x: 0 }), transition }}
-      className={cn(isDragging && 'relative z-10')}
+      className={cn(isDragging && 'relative z-10', leaving && 'step-leave pointer-events-none')}
+      aria-hidden={leaving || undefined}
     >
       <div
         ref={rowRef}
@@ -157,11 +168,16 @@ function StepRowImpl({ row, focused, editing, tabbable, dragDepth, handlers }: S
           className={cn(
             'flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border transition-colors',
             done
-              ? 'border-success bg-success text-white'
+              ? 'border-success bg-success text-white motion-safe:animate-[check-pop_250ms_ease-out]'
               : 'border-muted-foreground/40 hover:border-success',
           )}
         >
-          {done && <Check className="size-3" strokeWidth={3} />}
+          {done && (
+            <Check
+              className="size-3 motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-200"
+              strokeWidth={3}
+            />
+          )}
         </button>
 
         <div className="min-w-0 flex-1 pl-1.5">
@@ -181,8 +197,21 @@ function StepRowImpl({ row, focused, editing, tabbable, dragDepth, handlers }: S
           )}
         </div>
 
+        {!isLeaf && !row.collapsed && (
+          <span
+            aria-hidden
+            className="hidden h-1 w-10 shrink-0 overflow-hidden rounded-full bg-muted sm:block"
+          >
+            <span
+              className="block h-full rounded-full bg-success transition-[width] duration-300"
+              style={{ width: `${percent}%` }}
+            />
+          </span>
+        )}
         {meta !== null && (
-          <span className="shrink-0 px-1 text-xs tabular-nums text-muted-foreground">{meta}</span>
+          <span className="w-12 shrink-0 px-1 text-right text-xs tabular-nums text-muted-foreground">
+            {meta}
+          </span>
         )}
 
         <button

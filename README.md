@@ -64,6 +64,20 @@ Click a step's title to edit it. The outline is built for the keyboard:
 Drag the handle on the left of a row to move a branch; drag sideways to change
 its depth. Goals in the sidebar reorder the same way (long-press on touch).
 
+## Completing steps
+
+Ticking a step (checkbox or `Space`) pops the checkbox, then the step folds out
+of the outline and lands at the top of the **Completed** feed. A toast offers
+**Undo** for a few seconds; finishing the last open step of a branch completes
+the parent too and shows "🎉 Branch finished".
+
+The Completed feed (right-hand column on large screens, "Completed" in the
+sidebar otherwise) lists finished steps newest first, grouped by day ("Today",
+"Yesterday", "Tue 3 Nov"), each with its goal and breadcrumb. It can show all
+goals or just the current one. Every entry has an undo button, which also
+reopens a parent that was finished by that step. Animations respect the
+reduced-motion setting.
+
 ## Local data
 
 The web app keeps an in-memory copy of all goals and steps

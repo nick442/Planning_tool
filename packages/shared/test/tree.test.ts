@@ -84,6 +84,13 @@ describe('buildTree', () => {
     );
   });
 
+  it('can include selected completed steps only', () => {
+    const tree = buildTree(thesis(), 'g1', { includeCompleted: (s) => s.id === 'Paper A' });
+    const ids = flattenTree(tree).map((n) => n.step.id);
+    expect(ids).toContain('Paper A');
+    expect(ids).not.toContain('Search Scopus');
+  });
+
   it('counts hidden completed leaves in progress', () => {
     const [litReview, methodology] = buildTree(thesis(), 'g1');
     expect(litReview!.progress).toEqual({ done: 2, total: 4, ratio: 0.5 });

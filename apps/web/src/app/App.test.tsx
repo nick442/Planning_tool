@@ -209,4 +209,80 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Show archived (1)' }));
     expect(within(list).getByText('Old course')).toBeInTheDocument();
   });
+
+  describe('completion feedback and the Completed feed', () => {
+    async function setUp(user: ReturnType<typeof userEvent.setup>) {
+      render(<App />);
+      await createGoal(user, 'Thesis');
+      await user.click(screen.getByRole('button', { name: 'Add step' }));
+      await user.keyboard('Lit review{Enter}{Tab}Paper A{Enter}Paper B{Escape}');
+    }
+    const feed = () => screen.getByRole('region', { name: 'Completed' });
+    const toast = () => screen.getByRole('status', { name: 'Notifications' });
+    const check = (name: string) =>
+      within(screen.getByRole('treeitem', { name })).getByRole('checkbox');
+
+    it('lists a completed step under Today with its breadcrumb', async () => {
+      const user = userEvent.setup();
+      await setUp(user);
+      expect(within(feed()).getByText(/Finished steps collect here/)).toBeInTheDocument();
+
+      await user.click(check('Paper A'));
+      expect(within(feed()).getByText('Today')).toBeInTheDocument();
+      expect(within(feed()).getByText('Paper A')).toBeInTheDocument();
+      expect(within(feed()).getByText('Thesis › Lit review')).toBeInTheDocument();
+      expect(within(feed()).getByText('1 today')).toBeInTheDocument();
+      expect(toast()).toHaveTextContent('Done: Paper A');
+    });
+
+    it('undo in the toast reopens the step', async () => {
+      const user = userEvent.setup();
+      await setUp(user);
+      await user.click(check('Paper A'));
+      await user.click(within(toast()).getByRole('button', { name: 'Undo' }));
+      await waitFor(() => expect(outlineText()).toBe('Lit review\n  Paper A\n  Paper B'));
+      expect(within(feed()).queryByText('Paper A')).not.toBeInTheDocument();
+    });
+
+    it('celebrates a finished branch, and undo from the feed restores it', async () => {
+      const user = userEvent.setup();
+      await setUp(user);
+      await user.click(check('Paper A'));
+      await user.click(check('Paper B'));
+      expect(toast()).toHaveTextContent('Branch finished: Lit review');
+
+      // The finished branch is listed above the step that finished it.
+      const titles = within(feed())
+        .getAllByRole('listitem')
+        .map((li) => li.querySelector('span.truncate')?.textContent);
+      expect(titles.slice(0, 2)).toEqual(['Lit review', 'Paper B']);
+
+      await user.click(within(feed()).getByRole('button', { name: 'Undo "Paper B"' }));
+      await waitFor(() => expect(outlineText()).toBe('Lit review\n  Paper B'));
+      expect(within(feed()).getAllByRole('listitem')).toHaveLength(1);
+    });
+
+    it('filters the feed to the current goal', async () => {
+      const user = userEvent.setup();
+      await setUp(user);
+      await user.click(check('Paper A'));
+      await createGoal(user, 'Exam');
+      await user.click(within(feed()).getByRole('radio', { name: 'This goal' }));
+      expect(within(feed()).queryByText('Paper A')).not.toBeInTheDocument();
+      await user.click(within(feed()).getByRole('radio', { name: 'All goals' }));
+      expect(within(feed()).getByText('Paper A')).toBeInTheDocument();
+    });
+
+    it('fades a completed step out of the outline', async () => {
+      const user = userEvent.setup();
+      await setUp(user);
+      await user.click(check('Paper A'));
+      // Hidden from assistive tech at once, removed after the animation.
+      expect(outlineText()).toBe('Lit review\n  Paper B');
+      expect(document.querySelector('.step-leave')).not.toBeNull();
+      await waitFor(() => expect(document.querySelector('.step-leave')).toBeNull(), {
+        timeout: 2000,
+      });
+    });
+  });
 });

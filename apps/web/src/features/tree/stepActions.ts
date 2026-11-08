@@ -78,17 +78,20 @@ export function move(step: Step, target: MoveTarget): void {
   commitSteps(moveStep(getSteps(), step.id, target));
 }
 
+export type ToggleResult = { kind: 'completed' | 'reopened'; changes: Step[] };
+
 /**
  * Completes a step, or reopens it if it is already done. Asks before
- * completing a step that still has open sub-steps. Resolves false if cancelled.
+ * completing a step that still has open sub-steps. Resolves null if cancelled.
  */
-export async function toggleComplete(step: Step): Promise<boolean> {
+export async function toggleComplete(step: Step): Promise<ToggleResult | null> {
   const current = live(step.id);
-  if (!current) return false;
+  if (!current) return null;
 
   if (current.status === 'done') {
-    commitSteps(uncompleteStep(getSteps(), step.id));
-    return true;
+    const changes = uncompleteStep(getSteps(), step.id);
+    commitSteps(changes);
+    return { kind: 'reopened', changes };
   }
   const open = countOpenDescendants(getSteps(), step.id);
   if (open > 0) {
@@ -97,10 +100,11 @@ export async function toggleComplete(step: Step): Promise<boolean> {
       description: `"${current.title || 'Untitled'}" still has open sub-steps.`,
       confirmLabel: 'Mark all done',
     });
-    if (!ok || !live(step.id)) return false;
+    if (!ok || !live(step.id)) return null;
   }
-  commitSteps(completeStep(getSteps(), step.id, { cascade: true }));
-  return true;
+  const changes = completeStep(getSteps(), step.id, { cascade: true });
+  commitSteps(changes);
+  return { kind: 'completed', changes };
 }
 
 /** Deletes a step, asking first if it has sub-steps. Resolves false if cancelled. */

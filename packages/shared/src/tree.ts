@@ -209,8 +209,12 @@ export interface TreeNode {
 }
 
 export interface BuildTreeOptions {
-  /** Include done steps in `children`. Default false (they live in the Completed feed). */
-  includeCompleted?: boolean;
+  /**
+   * Which done steps to include. Default false: they live in the Completed
+   * feed. A function decides per step, e.g. to keep a just-completed step
+   * visible while it animates out.
+   */
+  includeCompleted?: boolean | ((step: Step) => boolean);
 }
 
 /**
@@ -223,13 +227,13 @@ export function buildTree(
   options: BuildTreeOptions = {},
 ): TreeNode[] {
   const index = new StepIndex(steps);
-  const includeCompleted = options.includeCompleted ?? false;
+  const option = options.includeCompleted ?? false;
+  const visible = (step: Step) =>
+    step.status !== 'done' || (typeof option === 'function' ? option(step) : option);
 
   const build = (step: Step, depth: number): TreeNode => {
     const allChildren = index.children(step.id);
-    const children = allChildren
-      .filter((child) => includeCompleted || child.status !== 'done')
-      .map((child) => build(child, depth + 1));
+    const children = allChildren.filter(visible).map((child) => build(child, depth + 1));
     return {
       step,
       children,
@@ -241,7 +245,7 @@ export function buildTree(
 
   return index
     .roots(goalId)
-    .filter((step) => includeCompleted || step.status !== 'done')
+    .filter(visible)
     .map((step) => build(step, 0));
 }
 
