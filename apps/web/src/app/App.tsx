@@ -14,6 +14,7 @@ import { useToday } from '@/features/goals/deadline';
 import { Outline } from '@/features/tree/Outline';
 import { addStepAt } from '@/features/tree/stepActions';
 import { cn } from '@/lib/utils';
+import { SyncIndicator } from '@/sync/SyncIndicator';
 import { useUiStore } from './store';
 import { TabBar } from './TabBar';
 
@@ -51,11 +52,11 @@ export function App() {
         )}
       >
         <GoalSidebar goals={goals} steps={steps} />
-        <div className="mt-auto hidden border-t pt-2 md:block lg:hidden">
+        <div className="mt-auto flex flex-col gap-1 border-t pt-2">
           <Button
             variant={feedView ? 'secondary' : 'ghost'}
             size="sm"
-            className="w-full justify-start text-muted-foreground"
+            className="hidden w-full justify-start text-muted-foreground md:flex lg:hidden"
             aria-pressed={feedView}
             onClick={() => setView(feedView ? 'goal' : 'completed')}
           >
@@ -64,6 +65,7 @@ export function App() {
               <span className="ml-auto text-xs tabular-nums text-success">{doneToday} today</span>
             )}
           </Button>
+          <SyncIndicator />
         </div>
       </aside>
 
@@ -74,15 +76,23 @@ export function App() {
         )}
       >
         <div className="mx-auto max-w-3xl space-y-6">
-          {selected && !feedView && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="-ml-2 text-muted-foreground md:hidden"
-              onClick={() => selectGoal(null)}
-            >
-              <ChevronLeft /> Goals
-            </Button>
+          {phoneShowsMain && (
+            // Phone top bar: back to the list, and the sync status.
+            <div className="-mx-2 flex items-center justify-between md:hidden">
+              {selected && !feedView ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => selectGoal(null)}
+                >
+                  <ChevronLeft /> Goals
+                </Button>
+              ) : (
+                <span />
+              )}
+              <SyncIndicator />
+            </div>
           )}
 
           {feedView && (

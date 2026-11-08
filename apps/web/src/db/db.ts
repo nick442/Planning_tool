@@ -15,10 +15,17 @@ export interface OutboxEntry {
   queuedAt: string;
 }
 
+/** Small key/value store for sync bookkeeping (e.g. the last pulled revision). */
+export interface MetaEntry {
+  key: string;
+  value: unknown;
+}
+
 export class PlanningDB extends Dexie {
   goals!: Table<Goal, string>;
   steps!: Table<Step, string>;
   outbox!: Table<OutboxEntry, string>;
+  meta!: Table<MetaEntry, string>;
 
   constructor(name = 'planning-tool') {
     // Relaxed durability: commits are much faster in Chromium. Data survives a
@@ -30,6 +37,7 @@ export class PlanningDB extends Dexie {
       steps: 'id, goalId, parentId, updatedAt, completedAt',
       outbox: 'key, table, queuedAt',
     });
+    this.version(2).stores({ meta: 'key' });
   }
 }
 

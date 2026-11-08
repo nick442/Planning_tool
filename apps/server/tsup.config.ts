@@ -8,4 +8,6 @@ export default defineConfig({
   clean: true,
   // The shared package ships TypeScript source, so bundle it into the server.
   noExternal: ['@planning/shared'],
+  // Native module: loaded from node_modules at runtime.
+  external: ['better-sqlite3'],
 });

@@ -8,7 +8,7 @@ of small steps, tick them off, and watch the Completed feed grow. See
 
 ```
 apps/web         React + Vite + Tailwind + shadcn/ui front end (PWA later)
-apps/server      Hono server for the Mac mini (sync and SQLite come in Milestone 5)
+apps/server      Hono + SQLite (Drizzle) server for the Mac mini: sync API and the built web app
 packages/shared  Zod schemas and the pure tree / ordering logic, with unit tests
 ```
 
@@ -28,7 +28,30 @@ pnpm dev
 ```
 
 `pnpm dev` starts the web app on http://localhost:5173 and the API server on
-http://localhost:3000 (the web dev server proxies `/api` to it).
+http://localhost:3000 (the web dev server proxies `/api` to it). The development
+database is `apps/server/data/planning.db`.
+
+In production the server serves the built web app itself:
+
+```bash
+pnpm build
+```
+
+```bash
+PLANNING_TOKEN=some-long-secret node apps/server/dist/index.js
+```
+
+| Variable         | Default                        | Meaning                                       |
+| ---------------- | ------------------------------ | --------------------------------------------- |
+| `PORT`           | `3000`                         | Port to listen on                             |
+| `HOST`           | `127.0.0.1`                    | Interface (Tailscale serve forwards to it)    |
+| `PLANNING_DB`    | `apps/server/data/planning.db` | SQLite file (created on first start)          |
+| `PLANNING_TOKEN` | not set                        | If set, devices need it (Sync dialog) to sync |
+| `WEB_ROOT`       | `apps/web/dist`                | Built web app to serve                        |
+
+Database migrations live in `apps/server/drizzle/` and run on start. After
+changing `apps/server/src/db/schema.ts`, generate a new one with
+`pnpm --filter @planning/server exec drizzle-kit generate`.
 
 ## Scripts
 
@@ -99,6 +122,25 @@ sidebar otherwise) lists finished steps newest first, grouped by day ("Today",
 goals or just the current one. Every entry has an undo button, which also
 reopens a parent that was finished by that step. Animations respect the
 reduced-motion setting.
+
+## Sync
+
+Each device works on its own copy and syncs with the server in the background
+(`apps/web/src/sync/engine.ts`, `apps/server/src/sync.ts`):
+
+- **Push** sends the records named in the outbox; the server keeps whichever
+  copy was changed last (`updatedAt`, last write wins per record) and gives
+  every stored change the next revision number.
+- **Pull** fetches everything changed since the last revision the device saw.
+- It runs on start, when the app comes back to the front or online, about a
+  second after a local change, every minute, and immediately when the server
+  announces (Server-Sent Events) that another device changed something.
+- If the server's database was reset or restored from an older backup, devices
+  notice (its revision went down) and send it everything they have.
+
+The sync status sits at the bottom of the sidebar (and top right on a phone):
+Synced, Syncing…, or Offline with the number of changes waiting. Click it to
+see details or enter the access token.
 
 ## Local data
 
