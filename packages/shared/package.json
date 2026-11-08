@@ -1,0 +1,19 @@
+{
+  "name": "@planning/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared schemas and pure tree/order logic for the planning tool.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fractional-indexing": "^4.0.0",
+    "ulid": "^3.0.2",
+    "zod": "^4.6.7"
+  }
+}

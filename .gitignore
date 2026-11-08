@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.vite/
+*.log
+.DS_Store
+.env
+.env.*
+# Server database files (the real data lives on the Mac mini)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
