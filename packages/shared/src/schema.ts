@@ -27,8 +27,10 @@ export const goalSchema = syncFieldsSchema.extend({
   kind: goalKindSchema,
   /** e.g. "Advanced ML". */
   course: z.string().optional(),
-  /** Accent colour (any CSS colour) or an emoji. */
+  /** Accent colour (any CSS colour). */
   color: z.string(),
+  /** Optional emoji shown instead of the colour dot. */
+  emoji: z.string().optional(),
   /** ISO date (YYYY-MM-DD). Display and countdown only. */
   deadline: isoDate.optional(),
   /** Fractional index: drag-and-drop order in the sidebar. */

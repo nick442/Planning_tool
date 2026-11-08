@@ -12,3 +12,7 @@ coverage/
 *.db-journal
 *.db-wal
 *.db-shm
+# Playwright
+test-results/
+playwright-report/
+blob-report/

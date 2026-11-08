@@ -310,13 +310,16 @@ export function countOpenDescendants(steps: readonly Step[], stepId: string): nu
 }
 
 /** Replaces changed records by id and appends new ones. Returns a new array. */
-export function applyChanges(steps: readonly Step[], changes: readonly Step[]): Step[] {
-  if (changes.length === 0) return [...steps];
+export function applyChanges<T extends { id: string }>(
+  records: readonly T[],
+  changes: readonly T[],
+): T[] {
+  if (changes.length === 0) return [...records];
   const byId = new Map(changes.map((c) => [c.id, c]));
-  const out = steps.map((s) => {
-    const changed = byId.get(s.id);
-    if (!changed) return s;
-    byId.delete(s.id);
+  const out = records.map((r) => {
+    const changed = byId.get(r.id);
+    if (!changed) return r;
+    byId.delete(r.id);
     return changed;
   });
   out.push(...byId.values());

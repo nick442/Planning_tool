@@ -42,8 +42,37 @@ http://localhost:3000 (the web dev server proxies `/api` to it).
 | `pnpm build`      | Builds the web app and the server                |
 | `pnpm check`      | Format check, lint, typecheck and tests          |
 
-CI (`.github/workflows/ci.yml`) runs format, lint, typecheck, tests and build on
-pull requests and pushes to `main`.
+CI (`.github/workflows/ci.yml`) runs format, lint, typecheck, tests and build, plus
+the Playwright suite in a second job, on pull requests and pushes to `main`.
+
+## Using the outline
+
+Click a step's title to edit it. The outline is built for the keyboard:
+
+| Key                    | While a row is selected             | While editing a title                       |
+| ---------------------- | ----------------------------------- | ------------------------------------------- |
+| `Enter`                | New step below, start typing        | Save, then new step below (empty: stop)     |
+| `Tab` / `Shift+Tab`    | Indent / outdent                    | Indent / outdent, keep typing               |
+| `Space`                | Complete (asks if sub-steps open)   |                                             |
+| `↑` / `↓`              | Previous / next row                 | Save, edit previous / next row              |
+| `←` / `→`              | Collapse / expand (or go to parent) |                                             |
+| `Alt+↑` / `Alt+↓`      | Move among siblings                 | Move among siblings                         |
+| `e` or `F2`            | Edit title                          |                                             |
+| `Delete` / `Backspace` | Delete (asks if it has sub-steps)   | `Backspace` on an empty step deletes it     |
+| `Escape`               | Deselect                            | Save and stop editing (empty step: removed) |
+
+Drag the handle on the left of a row to move a branch; drag sideways to change
+its depth. Goals in the sidebar reorder the same way (long-press on touch).
+
+## Local data
+
+The web app keeps an in-memory copy of all goals and steps
+(`apps/web/src/db/dataStore.ts`). Every change is applied there at once, written
+synchronously to a small localStorage journal, and then saved to IndexedDB
+(Dexie) in batched transactions together with an outbox entry for the coming
+sync. Leftover journal entries are replayed on start, so a reload right after a
+change loses nothing. Changes that arrive in IndexedDB from elsewhere (another
+tab, later the sync loop) are merged back in by last-write-wins on `updatedAt`.
 
 ## Core logic (`packages/shared`)
 

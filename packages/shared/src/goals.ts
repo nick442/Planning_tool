@@ -15,6 +15,7 @@ export interface CreateGoalInput {
   kind?: GoalKind;
   course?: string;
   color?: string;
+  emoji?: string;
   deadline?: string;
 }
 
@@ -34,6 +35,7 @@ export function createGoal(
     kind: input.kind ?? 'other',
     ...(input.course !== undefined ? { course: input.course } : {}),
     color: input.color ?? DEFAULT_GOAL_COLOR,
+    ...(input.emoji ? { emoji: input.emoji } : {}),
     ...(input.deadline !== undefined ? { deadline: input.deadline } : {}),
     order: keyAfterAll(existing.map((g) => g.order)),
     archived: false,
