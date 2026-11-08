@@ -13,6 +13,7 @@ import type { Step } from '@planning/shared';
 import { Check, ChevronDown, ChevronRight, GripVertical, NotebookPen, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FlatRow } from './outlineModel';
+import { useSwipeToComplete } from './swipe';
 
 export const INDENT_PX = 20;
 
@@ -95,6 +96,11 @@ function StepRowImpl({
     }
   });
 
+  const swipe = useSwipeToComplete(
+    () => handlers.onToggleComplete(row),
+    !editing && !isDragging && !leaving,
+  );
+
   const depth = dragDepth ?? row.depth;
   const percent = Math.round(progress.ratio * 100);
   const openLeaves = progress.total - progress.done;
@@ -110,133 +116,160 @@ function StepRowImpl({
       className={cn(isDragging && 'relative z-10', leaving && 'step-leave pointer-events-none')}
       aria-hidden={leaving || undefined}
     >
-      <div
-        ref={rowRef}
-        role="treeitem"
-        aria-level={row.depth + 1}
-        aria-expanded={row.hasChildren ? !row.collapsed : undefined}
-        aria-selected={focused}
-        aria-label={step.title || 'Untitled step'}
-        data-step-id={step.id}
-        data-outline-focus=""
-        tabIndex={focused || tabbable ? 0 : -1}
-        onFocus={(e) => {
-          if (e.target === e.currentTarget || !focused) handlers.onFocusRow(row);
-        }}
-        onKeyDown={(e) => {
-          if (e.target === e.currentTarget) handlers.onNavKey(e, row);
-        }}
-        className={cn(
-          'group flex min-h-9 items-center gap-1 rounded-md pr-1 outline-none',
-          focused && !editing ? 'bg-accent ring-1 ring-ring/40' : 'hover:bg-accent/50',
-          isDragging && 'bg-background shadow-md ring-1 ring-ring/40',
-        )}
-        style={{ paddingLeft: depth * INDENT_PX }}
-      >
-        <button
-          ref={setActivatorNodeRef}
-          type="button"
-          aria-label="Drag to move"
-          className="cursor-grab touch-none p-0.5 text-muted-foreground/40 opacity-100 hover:text-muted-foreground md:opacity-0 md:group-hover:opacity-100"
-          {...attributes}
-          {...listeners}
-          tabIndex={-1}
-        >
-          <GripVertical className="size-4" />
-        </button>
-
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-label={row.collapsed ? 'Expand' : 'Collapse'}
-          onClick={() => handlers.onToggleCollapse(row)}
-          className={cn(
-            'rounded p-0.5 text-muted-foreground hover:bg-accent',
-            !row.hasChildren && 'invisible',
-          )}
-        >
-          {row.collapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
-        </button>
-
-        <button
-          type="button"
-          role="checkbox"
-          tabIndex={-1}
-          aria-checked={done}
-          aria-label={done ? 'Mark as not done' : 'Mark as done'}
-          onClick={() => handlers.onToggleComplete(row)}
-          className={cn(
-            'flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border transition-colors',
-            done
-              ? 'border-success bg-success text-white motion-safe:animate-[check-pop_250ms_ease-out]'
-              : 'border-muted-foreground/40 hover:border-success',
-          )}
-        >
-          {done && (
+      <div className="relative overflow-hidden rounded-md">
+        {swipe.offset > 0 && (
+          <div
+            aria-hidden
+            className={cn(
+              'absolute inset-0 flex items-center pl-4 transition-colors',
+              swipe.armed ? 'bg-success text-white' : 'bg-success/20 text-success',
+            )}
+          >
             <Check
-              className="size-3 motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-200"
+              className={cn('size-5 transition-transform', swipe.armed && 'scale-125')}
               strokeWidth={3}
             />
+          </div>
+        )}
+        <div
+          ref={rowRef}
+          {...swipe.handlers}
+          role="treeitem"
+          aria-level={row.depth + 1}
+          aria-expanded={row.hasChildren ? !row.collapsed : undefined}
+          aria-selected={focused}
+          aria-label={step.title || 'Untitled step'}
+          data-step-id={step.id}
+          data-outline-focus=""
+          tabIndex={focused || tabbable ? 0 : -1}
+          onFocus={(e) => {
+            if (e.target === e.currentTarget || !focused) handlers.onFocusRow(row);
+          }}
+          onKeyDown={(e) => {
+            if (e.target === e.currentTarget) handlers.onNavKey(e, row);
+          }}
+          className={cn(
+            'group relative flex min-h-11 touch-pan-y items-center gap-1 rounded-md pr-1 outline-none md:min-h-9',
+            focused && !editing ? 'bg-accent ring-1 ring-inset ring-ring/40' : 'hover:bg-accent/50',
+            isDragging && 'bg-background shadow-md ring-1 ring-inset ring-ring/40',
+            swipe.offset > 0 && !focused && 'bg-background',
           )}
-        </button>
+          style={{
+            paddingLeft: depth * INDENT_PX,
+            ...(swipe.offset > 0
+              ? { transform: `translateX(${swipe.offset}px)` }
+              : { transition: 'transform 200ms ease-out' }),
+          }}
+        >
+          <button
+            ref={setActivatorNodeRef}
+            type="button"
+            aria-label="Drag to move"
+            className="cursor-grab touch-none p-1.5 text-muted-foreground/40 opacity-100 hover:text-muted-foreground md:p-0.5 md:opacity-0 md:group-hover:opacity-100"
+            {...attributes}
+            {...listeners}
+            tabIndex={-1}
+          >
+            <GripVertical className="size-4" />
+          </button>
 
-        <div className="min-w-0 flex-1 pl-1.5">
-          {editing ? (
-            <TitleInput row={row} rowRef={rowRef} handlers={handlers} />
-          ) : (
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={row.collapsed ? 'Expand' : 'Collapse'}
+            onClick={() => handlers.onToggleCollapse(row)}
+            className={cn(
+              'rounded p-0.5 text-muted-foreground hover:bg-accent',
+              !row.hasChildren && 'invisible',
+            )}
+          >
+            {row.collapsed ? (
+              <ChevronRight className="size-4" />
+            ) : (
+              <ChevronDown className="size-4" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            role="checkbox"
+            tabIndex={-1}
+            aria-checked={done}
+            aria-label={done ? 'Mark as not done' : 'Mark as done'}
+            onClick={() => handlers.onToggleComplete(row)}
+            className={cn(
+              'flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border transition-colors',
+              done
+                ? 'border-success bg-success text-white motion-safe:animate-[check-pop_250ms_ease-out]'
+                : 'border-muted-foreground/40 hover:border-success',
+            )}
+          >
+            {done && (
+              <Check
+                className="size-3 motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-200"
+                strokeWidth={3}
+              />
+            )}
+          </button>
+
+          <div className="min-w-0 flex-1 pl-1.5">
+            {editing ? (
+              <TitleInput row={row} rowRef={rowRef} handlers={handlers} />
+            ) : (
+              <span
+                onClick={() => handlers.onStartEdit(row)}
+                className={cn(
+                  'block cursor-text truncate py-1',
+                  done && 'text-muted-foreground line-through',
+                  !step.title && 'text-muted-foreground/60 italic',
+                )}
+              >
+                {step.title || 'Untitled'}
+              </span>
+            )}
+          </div>
+
+          {!isLeaf && !row.collapsed && (
             <span
-              onClick={() => handlers.onStartEdit(row)}
-              className={cn(
-                'block cursor-text truncate py-1',
-                done && 'text-muted-foreground line-through',
-                !step.title && 'text-muted-foreground/60 italic',
-              )}
+              aria-hidden
+              className="hidden h-1 w-10 shrink-0 overflow-hidden rounded-full bg-muted sm:block"
             >
-              {step.title || 'Untitled'}
+              <span
+                className="block h-full rounded-full bg-success transition-[width] duration-300"
+                style={{ width: `${percent}%` }}
+              />
             </span>
           )}
-        </div>
-
-        {!isLeaf && !row.collapsed && (
-          <span
-            aria-hidden
-            className="hidden h-1 w-10 shrink-0 overflow-hidden rounded-full bg-muted sm:block"
-          >
-            <span
-              className="block h-full rounded-full bg-success transition-[width] duration-300"
-              style={{ width: `${percent}%` }}
-            />
-          </span>
-        )}
-        {meta !== null && (
-          <span className="w-12 shrink-0 px-1 text-right text-xs tabular-nums text-muted-foreground">
-            {meta}
-          </span>
-        )}
-
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-label={notesOpen ? 'Hide notes' : 'Notes'}
-          aria-pressed={notesOpen}
-          onClick={() => setNotesOpen(!notesOpen)}
-          className={cn(
-            'rounded p-1 text-muted-foreground hover:bg-accent',
-            step.notes ? 'opacity-70' : 'opacity-0 group-hover:opacity-100 max-md:hidden',
+          {meta !== null && (
+            <span className="w-12 shrink-0 px-1 text-right text-xs tabular-nums text-muted-foreground">
+              {meta}
+            </span>
           )}
-        >
-          <NotebookPen className="size-3.5" />
-        </button>
 
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-label="Add sub-step"
-          onClick={() => handlers.onAddChild(row)}
-          className="rounded p-1 text-muted-foreground hover:bg-accent md:opacity-0 md:group-hover:opacity-100"
-        >
-          <Plus className="size-4" />
-        </button>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={notesOpen ? 'Hide notes' : 'Notes'}
+            aria-pressed={notesOpen}
+            onClick={() => setNotesOpen(!notesOpen)}
+            className={cn(
+              'rounded p-1 text-muted-foreground hover:bg-accent',
+              step.notes ? 'opacity-70' : 'opacity-0 group-hover:opacity-100 max-md:hidden',
+            )}
+          >
+            <NotebookPen className="size-3.5" />
+          </button>
+
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label="Add sub-step"
+            onClick={() => handlers.onAddChild(row)}
+            className="rounded p-1 text-muted-foreground hover:bg-accent md:opacity-0 md:group-hover:opacity-100"
+          >
+            <Plus className="size-4" />
+          </button>
+        </div>
       </div>
 
       {notesOpen && (
@@ -304,7 +337,7 @@ function NotesField({ step, onSave }: { step: Step; onSave: (step: Step, notes: 
       placeholder="Notes, links, what 'done' means…"
       onChange={(e) => setValue(e.target.value)}
       onBlur={() => value !== (step.notes ?? '') && onSave(step, value)}
-      className="w-full resize-y rounded-md border border-input bg-transparent px-2 py-1 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      className="w-full resize-y rounded-md border border-input bg-transparent px-2 py-1 text-base outline-none md:text-sm focus-visible:ring-2 focus-visible:ring-ring/40"
     />
   );
 }

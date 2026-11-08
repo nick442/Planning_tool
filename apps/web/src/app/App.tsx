@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { goalProgress, sortGoals } from '@planning/shared';
-import { CircleCheckBig, ChevronLeft } from 'lucide-react';
+import { CircleCheckBig, ChevronLeft, Plus } from 'lucide-react';
 import { ConfirmHost } from '@/components/ConfirmDialog';
 import { Toaster } from '@/components/Toaster';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,10 @@ import { GoalHeader } from '@/features/goals/GoalHeader';
 import { GoalSidebar } from '@/features/goals/GoalSidebar';
 import { useToday } from '@/features/goals/deadline';
 import { Outline } from '@/features/tree/Outline';
+import { addStepAt } from '@/features/tree/stepActions';
 import { cn } from '@/lib/utils';
 import { useUiStore } from './store';
+import { TabBar } from './TabBar';
 
 export function App() {
   useEffect(() => startDataSync(), []);
@@ -44,12 +46,12 @@ export function App() {
     <div className="flex min-h-dvh">
       <aside
         className={cn(
-          'w-full shrink-0 flex-col gap-2 border-r bg-muted/30 p-3 md:flex md:w-64',
+          'w-full shrink-0 flex-col gap-2 border-r bg-muted/30 p-3 pb-24 pt-[max(0.75rem,env(safe-area-inset-top))] md:flex md:w-64 md:pb-3',
           phoneShowsMain ? 'hidden' : 'flex',
         )}
       >
         <GoalSidebar goals={goals} steps={steps} />
-        <div className="mt-auto border-t pt-2 lg:hidden">
+        <div className="mt-auto hidden border-t pt-2 md:block lg:hidden">
           <Button
             variant={feedView ? 'secondary' : 'ghost'}
             size="sm"
@@ -67,12 +69,12 @@ export function App() {
 
       <main
         className={cn(
-          'min-w-0 flex-1 px-4 py-6 sm:px-8 md:block md:py-10',
+          'min-w-0 flex-1 px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 md:block md:py-10',
           phoneShowsMain ? 'block' : 'hidden',
         )}
       >
         <div className="mx-auto max-w-3xl space-y-6">
-          {phoneShowsMain && (
+          {selected && !feedView && (
             <Button
               variant="ghost"
               size="sm"
@@ -113,6 +115,19 @@ export function App() {
         </div>
       </aside>
 
+      {/* Phones: add a step with one thumb. */}
+      {goal && selected && !feedView && (
+        <Button
+          size="icon"
+          aria-label="New step"
+          className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 z-30 size-14 rounded-full shadow-lg md:hidden"
+          onClick={() => useUiStore.getState().editStep(addStepAt(goal.id, null))}
+        >
+          <Plus className="size-6" />
+        </Button>
+      )}
+
+      <TabBar doneToday={doneToday} />
       <ConfirmHost />
       <Toaster />
     </div>

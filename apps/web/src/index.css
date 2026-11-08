@@ -81,6 +81,11 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    /* No double-tap zoom delay, no grey flash on tap, room for the notch in landscape. */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 

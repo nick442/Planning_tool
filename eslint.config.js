@@ -33,7 +33,7 @@ export default tseslint.config(
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
-    files: ['apps/server/**/*.ts', '**/*.config.{js,ts}'],
+    files: ['apps/server/**/*.ts', '**/*.config.{js,ts}', '**/scripts/**/*.{js,mjs}'],
     languageOptions: { globals: globals.node },
   },
   prettier,

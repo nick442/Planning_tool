@@ -7,7 +7,7 @@ export function Toaster() {
   const toast = useToastStore((s) => s.toast);
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || toast.duration === null) return;
     const timer = setTimeout(() => dismissToast(toast.id), toast.duration);
     return () => clearTimeout(timer);
   }, [toast]);
@@ -17,7 +17,7 @@ export function Toaster() {
       role="status"
       aria-label="Notifications"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 pb-[env(safe-area-inset-bottom)]"
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 md:bottom-4"
     >
       {toast && (
         <div

@@ -64,6 +64,28 @@ Click a step's title to edit it. The outline is built for the keyboard:
 Drag the handle on the left of a row to move a branch; drag sideways to change
 its depth. Goals in the sidebar reorder the same way (long-press on touch).
 
+## On the phone
+
+Below the tablet breakpoint the app switches to one screen at a time, with
+bottom tabs: **Goals** (goal list → outline; tap the tab again to go back to the
+list) and **Done** (the Completed feed, with today's count on the tab). The
+Today tab from the plan arrives with the Today list in Milestone 8.
+
+- Tap a title to edit it; the floating **+** adds a step, the **+** on a row adds a sub-step.
+- Swipe a step to the right to complete it (let go past the green check).
+- Drag the handle on the left of a row to move it.
+
+### Installing it (PWA)
+
+The app is an installable PWA: open it over HTTPS (the Mac mini's Tailscale
+address, Milestone 6) and choose **Add to Home Screen** (Safari) or **Install
+app** (Chrome). It then opens full screen and starts with no connection: the
+service worker precaches the whole app and the data lives in IndexedDB. When a
+new version is deployed, a toast offers to reload into it.
+
+App icons live in `apps/web/public/icons/`; regenerate them with
+`pnpm --filter @planning/web icons`.
+
 ## Completing steps
 
 Ticking a step (checkbox or `Space`) pops the checkbox, then the step folds out

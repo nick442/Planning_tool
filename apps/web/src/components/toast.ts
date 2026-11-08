@@ -5,8 +5,8 @@ export interface ToastOptions {
   /** "celebrate" for a finished branch. */
   tone?: 'default' | 'celebrate';
   action?: { label: string; run: () => void };
-  /** Milliseconds before it disappears. */
-  duration?: number;
+  /** Milliseconds before it disappears; null keeps it until dismissed. */
+  duration?: number | null;
 }
 
 export interface Toast extends ToastOptions {
