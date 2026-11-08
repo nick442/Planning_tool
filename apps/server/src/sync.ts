@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { asc, eq, gt, sql } from 'drizzle-orm';
 import {
   isNewer,
@@ -7,7 +8,7 @@ import {
   type Step,
 } from '@planning/shared';
 import type { Db } from './db/client';
-import { goals, steps } from './db/schema';
+import { goals, meta, steps } from './db/schema';
 
 type Listener = (rev: number) => void;
 
@@ -22,9 +23,16 @@ export const DEFAULT_PULL_LIMIT = 1000;
  */
 export class SyncService {
   private rev: number;
+  readonly epoch: string;
   private readonly listeners = new Set<Listener>();
 
   constructor(private readonly db: Db) {
+    const stored = db.select().from(meta).where(eq(meta.key, 'epoch')).get();
+    if (stored) this.epoch = stored.value;
+    else {
+      this.epoch = randomBytes(8).toString('hex');
+      db.insert(meta).values({ key: 'epoch', value: this.epoch }).run();
+    }
     const row = db.get<{ rev: number | null }>(
       sql`select max(rev) as rev from (select rev from goals union all select rev from steps)`,
     );
@@ -97,6 +105,7 @@ export class SyncService {
     const hasMore = rows.length > limit;
     const page = rows.slice(0, limit);
     return {
+      epoch: this.epoch,
       goals: page.filter((r) => r.kind === 'goal').map((r) => r.data as Goal),
       steps: page.filter((r) => r.kind === 'step').map((r) => r.data as Step),
       // Lower than `since` when the server's database was reset or restored

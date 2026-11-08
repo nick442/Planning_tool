@@ -24,6 +24,7 @@ class FakeServer {
   steps = new Map<string, Step>();
   goals = new Map<string, Goal>();
   token: string | null = null;
+  epoch = 'epoch-1';
   down = false;
   pushes = 0;
 
@@ -47,7 +48,7 @@ class FakeServer {
     if (url.pathname === '/api/sync/pull') {
       const since = Number(url.searchParams.get('since'));
       const steps = [...this.steps.values()].filter((s) => s.rev! > since);
-      return Response.json({ goals: [], steps, rev: this.rev, hasMore: false });
+      return Response.json({ epoch: this.epoch, goals: [], steps, rev: this.rev, hasMore: false });
     }
     return new Response('{}', { status: 404 });
   };
@@ -180,5 +181,26 @@ describe('SyncEngine', () => {
     await engine.syncNow();
     expect([...server.steps.keys()].sort()).toEqual(['a', 'b']);
     expect(await db.outbox.count()).toBe(0);
+  });
+
+  it('re-sends everything when the server database was restored from a backup', async () => {
+    await localChange(step('a', T(1)));
+    await engine.syncNow();
+    // Lots of activity: the device has seen revision 50.
+    for (let i = 0; i < 49; i++) server.external(step(`x${i}`, T(2)));
+    await localChange(step('b', T(3)));
+    await engine.syncNow();
+    expect(server.rev).toBe(51);
+
+    // Restore an older copy that only had "a", then more pushes from elsewhere
+    // push the revision past what this device has seen. Only the epoch tells.
+    const restored = new Map([...server.steps].filter(([id]) => id === 'a'));
+    server.steps = restored;
+    server.epoch = 'epoch-2';
+    for (let i = 0; i < 60; i++) server.external(step(`y${i}`, T(4)));
+    await engine.syncNow();
+    expect(server.steps.has('b')).toBe(true);
+    expect(server.steps.has('x0')).toBe(true);
+    expect((await db.steps.get('y59'))?.title).toBe('y59');
   });
 });

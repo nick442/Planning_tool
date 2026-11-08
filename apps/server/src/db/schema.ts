@@ -22,3 +22,9 @@ function recordTable<T>(name: string) {
 
 export const goals = recordTable<Goal>('goals');
 export const steps = recordTable<Step>('steps');
+
+/** Small key/value table, e.g. the database's sync epoch. */
+export const meta = sqliteTable('meta', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+});

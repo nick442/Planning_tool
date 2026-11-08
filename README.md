@@ -15,6 +15,9 @@ packages/shared  Zod schemas and the pure tree / ordering logic, with unit tests
 `packages/shared` ships TypeScript source. Vite compiles it for the web app and
 `tsup` bundles it into the server build.
 
+**Running it for real** on the Mac mini (service, Tailscale HTTPS, backups,
+installing on the phone): see [deploy/README.md](deploy/README.md).
+
 ## Getting started
 
 Needs Node 22.12+ and pnpm 10 (`corepack enable` sets up the pinned version).
@@ -141,6 +144,12 @@ Each device works on its own copy and syncs with the server in the background
 The sync status sits at the bottom of the sidebar (and top right on a phone):
 Synced, Syncing…, or Offline with the number of changes waiting. Click it to
 see details or enter the access token.
+
+## Export and import
+
+**Export / import** (bottom of the sidebar) downloads everything as a JSON file
+or loads one back in. Imports merge by last write wins, and the imported
+records then sync to the other devices like any other change.
 
 ## Local data
 

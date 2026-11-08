@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Shared schemas and pure tree/order logic for the planning tool.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./export": "./src/export.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -57,6 +57,7 @@ export function setToken(token: string | null): void {
 }
 
 const LAST_REV = 'lastRev';
+const EPOCH = 'serverEpoch';
 const PERIODIC_MS = 60_000;
 const AFTER_CHANGE_MS = 1_000;
 
@@ -235,14 +236,17 @@ export class SyncEngine {
     let since = await this.lastRev();
     for (;;) {
       const page = await this.api<PullResponse>(`/api/sync/pull?since=${since}`);
-      if (page.rev < since) {
-        // The server was reset or restored from an older backup: send it
-        // everything this device has and start over.
+      const epoch = (await this.db.meta.get(EPOCH))?.value;
+      if ((epoch !== undefined && epoch !== page.epoch) || page.rev < since) {
+        // The server's database was replaced (fresh start or restored backup):
+        // send it everything this device has and pull from scratch.
         await this.requeueEverything();
         await this.setLastRev(0);
+        await this.db.meta.put({ key: EPOCH, value: page.epoch });
         this.again = true;
         return;
       }
+      if (epoch === undefined) await this.db.meta.put({ key: EPOCH, value: page.epoch });
       await applyRemote(page.goals, page.steps, this.db);
       since = page.rev;
       await this.setLastRev(since);

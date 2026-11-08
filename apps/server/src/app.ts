@@ -6,6 +6,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { streamSSE } from 'hono/streaming';
 import { timingSafeEqual } from 'node:crypto';
 import { pushRequestSchema } from '@planning/shared';
+import { listBackups } from './backup';
 import { DEFAULT_PULL_LIMIT, type SyncService } from './sync';
 
 export interface AppOptions {
@@ -16,6 +17,8 @@ export interface AppOptions {
   webRoot?: string;
   /** How often SSE connections get a keep-alive comment. */
   keepAliveMs?: number;
+  /** Backup folder, reported by /api/health. */
+  backupDir?: string;
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -40,11 +43,17 @@ function requireToken(token: string | undefined): MiddlewareHandler {
  * The HTTP app. Kept separate from `index.ts` (which opens the database and
  * starts listening) so tests can call `app.request()` directly.
  */
-export function createApp({ sync, token, webRoot, keepAliveMs = 25_000 }: AppOptions) {
+export function createApp({ sync, token, webRoot, keepAliveMs = 25_000, backupDir }: AppOptions) {
   const app = new Hono();
 
   app.get('/api/health', (c) =>
-    c.json({ ok: true, rev: sync.currentRev, time: new Date().toISOString() }),
+    c.json({
+      ok: true,
+      epoch: sync.epoch,
+      rev: sync.currentRev,
+      time: new Date().toISOString(),
+      ...(backupDir ? { lastBackup: listBackups(backupDir)[0] ?? null } : {}),
+    }),
   );
 
   app.use('/api/sync/*', requireToken(token));

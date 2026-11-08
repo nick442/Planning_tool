@@ -55,6 +55,14 @@ describe('SyncService', () => {
     expect(sync.pull(42)).toMatchObject({ rev: 0, hasMore: false });
   });
 
+  it('gives each database its own epoch', () => {
+    const a = memorySync().sync;
+    const b = memorySync().sync;
+    expect(a.epoch).toMatch(/^[0-9a-f]{16}$/);
+    expect(a.epoch).not.toBe(b.epoch);
+    expect(a.pull(0).epoch).toBe(a.epoch);
+  });
+
   it('syncs deletions as records with deleted: true', () => {
     const { sync } = memorySync();
     sync.push({ goals: [], steps: [step('a')] });
@@ -91,12 +99,16 @@ describe('SyncService', () => {
     try {
       const file = join(dir, 'planning.db');
       const first = openDatabase(file, migrations);
-      new SyncService(first.db).push({ goals: [goal('g')], steps: [step('s')] });
+      const before = new SyncService(first.db);
+      const epochBefore = before.epoch;
+      before.push({ goals: [goal('g')], steps: [step('s')] });
       first.close();
 
       const second = openDatabase(file, migrations);
       const sync = new SyncService(second.db);
       expect(sync.currentRev).toBe(2);
+      // Same database, same epoch.
+      expect(sync.epoch).toBe(epochBefore);
       expect(sync.push({ goals: [], steps: [step('t')] }).rev).toBe(3);
       second.close();
     } finally {

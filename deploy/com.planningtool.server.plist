@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd service for the Planning Tool server on the Mac mini.
+  Don't edit the copy in ~/Library/LaunchAgents by hand: deploy/install.sh
+  fills in the @PLACEHOLDERS@ and installs it.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.planningtool.server</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>@NODE@</string>
+    <string>@REPO@/apps/server/dist/index.js</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>@REPO@</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PORT</key>
+    <string>@PORT@</string>
+    <key>HOST</key>
+    <string>127.0.0.1</string>
+    <key>PLANNING_DB</key>
+    <string>@DATA_DIR@/planning.db</string>
+    <key>PLANNING_BACKUP_DIR</key>
+    <string>@BACKUP_DIR@</string>
+    <key>PLANNING_BACKUP_KEEP</key>
+    <string>30</string>
+    <key>PLANNING_BACKUP_HOUR</key>
+    <string>3</string>
+    <key>PLANNING_TOKEN</key>
+    <string>@TOKEN@</string>
+  </dict>
+
+  <!-- Start at login and restart whenever it stops. -->
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <key>StandardOutPath</key>
+  <string>@LOG@</string>
+  <key>StandardErrorPath</key>
+  <string>@LOG@</string>
+</dict>
+</plist>

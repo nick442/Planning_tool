@@ -81,6 +81,15 @@ describe('API', () => {
     await reader.cancel();
   });
 
+  it('reports the latest backup in /api/health', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'planning-health-'));
+    writeFileSync(join(dir, 'planning-2026-11-07.db'), '');
+    writeFileSync(join(dir, 'planning-2026-11-08.db'), '');
+    const res = await createApp({ sync: memorySync().sync, backupDir: dir }).request('/api/health');
+    expect(await res.json()).toMatchObject({ lastBackup: 'planning-2026-11-08.db' });
+    rmSync(dir, { recursive: true, force: true });
+  });
+
   it('answers unknown API paths with JSON 404', async () => {
     const res = await createApp({ sync: memorySync().sync }).request('/api/nope');
     expect(res.status).toBe(404);

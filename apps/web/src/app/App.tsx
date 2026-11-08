@@ -13,6 +13,7 @@ import { GoalSidebar } from '@/features/goals/GoalSidebar';
 import { useToday } from '@/features/goals/deadline';
 import { Outline } from '@/features/tree/Outline';
 import { addStepAt } from '@/features/tree/stepActions';
+import { DataButton } from '@/features/data/DataDialog';
 import { cn } from '@/lib/utils';
 import { SyncIndicator } from '@/sync/SyncIndicator';
 import { useUiStore } from './store';
@@ -66,6 +67,7 @@ export function App() {
             )}
           </Button>
           <SyncIndicator />
+          <DataButton />
         </div>
       </aside>
 

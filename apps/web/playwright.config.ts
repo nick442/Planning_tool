@@ -47,6 +47,8 @@ export default defineConfig({
       // Always serve the current build; a stale server would test old code.
       command: `pnpm exec vite preview --port ${previewPort} --strictPort`,
       port: previewPort,
+      // These tests run without a sync server; its proxy errors are expected noise.
+      stderr: 'ignore',
       reuseExistingServer: false,
       timeout: 60_000,
     },

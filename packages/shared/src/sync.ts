@@ -25,6 +25,12 @@ export interface PushResponse {
 }
 
 export interface PullResponse {
+  /**
+   * Identifies the server's database. It changes when the database is
+   * replaced (fresh start, restored backup); devices then send everything
+   * they have and pull from scratch.
+   */
+  epoch: string;
   goals: Goal[];
   steps: Step[];
   /** Pass this as `since` next time. */
@@ -37,15 +43,5 @@ export interface ChangedEvent {
   rev: number;
 }
 
-/**
- * Last write wins, per record: `incoming` replaces `existing` when it was
- * changed later. On a tie the existing copy stays, so every device and the
- * server settle on the same record.
- */
-export function isNewer(
-  incoming: { updatedAt: string },
-  existing: { updatedAt: string } | undefined,
-): boolean {
-  if (!existing) return true;
-  return Date.parse(incoming.updatedAt) > Date.parse(existing.updatedAt);
-}
+// Kept in its own zod-free module so the web bundle can use it cheaply.
+export { isNewer } from './lww';
